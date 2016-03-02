@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import win32con, win32api, os, sys
-import ctypes
-from ctypes import byref, wintypes
-from ConfigParser import RawConfigParser
+from ctypes import byref, wintypes, create_unicode_buffer, windll
+from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 
 def get_desktop_ini(dirname):
     desktopini = os.path.join(dirname, "desktop.ini")
@@ -20,23 +19,35 @@ def activate_desktop_ini(dirname):
 def read_desktop_ini(dirname):
     desktopini = get_desktop_ini(dirname)
     config = RawConfigParser()
-    RawConfigParser().read(desktopini)
+    with open(desktopini, 'r') as f:
+        RawConfigParser().read(f)
     return config
 
 def write_desktop_ini(dirname, config):
     desktopini = get_desktop_ini(dirname)
-    config.write(desktopini)
+    with open(desktopini, 'w') as f:
+        config.write(f)
 
-def select_icon():
-    iconpath = ctypes.create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
-    iconnum = wintypes.INT(0)
-    ctypes.windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum))
+def select_icon(iconpath=None, iconnum=0):
+    if iconpath is None:
+        iconpath = create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
+    if iconnum == 0:
+        iconnum = wintypes.INT(0)
+    assert windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum)) == 1
     return iconpath.value, iconnum.value
 
 if __name__ == "__main__":
     dirname = os.getcwd()
     config = read_desktop_ini(dirname)
-    print repr(config)
+    #config.add_section(".ShellClassInfo")
+    try:
+        iconpath, iconnum = config.get(".ShellClassInfo", "IconResource").split(",")
+    except (NoSectionError, NoOptionError):
+        iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
     print config.sections()
     config.write(sys.stdout)
-    print select_icon()
+    iconpath, iconnum =  select_icon(iconpath, iconnum)
+    print "{},-{}".format(iconpath,iconnum)
+    config.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
+    config.write(sys.stdout)
+    write_desktop_ini(dirname, config)
