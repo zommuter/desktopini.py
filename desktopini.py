@@ -3,7 +3,7 @@
 
 import win32con, win32api, os, sys
 import ctypes
-from ctypes import byref
+from ctypes import byref, wintypes
 from ConfigParser import RawConfigParser
 
 def get_desktop_ini(dirname):
@@ -29,9 +29,9 @@ def write_desktop_ini(dirname, config):
 
 def select_icon():
     iconpath = ctypes.create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
-    iconnum = ctypes.wintypes.INT(0)
+    iconnum = wintypes.INT(0)
     ctypes.windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum))
-    return iconpath, iconnum
+    return iconpath.value, iconnum.value
 
 if __name__ == "__main__":
     dirname = os.getcwd()
@@ -39,3 +39,4 @@ if __name__ == "__main__":
     print repr(config)
     print config.sections()
     config.write(sys.stdout)
+    print select_icon()
