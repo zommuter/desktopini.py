@@ -21,10 +21,9 @@ class DesktopIni(RawConfigParser):
             dirname = os.getcwd()
         self.dirname = dirname
         self.desktopini = os.path.join(dirname, "desktop.ini")
-        #with open(self.desktopini, 'a'):
-        #    pass # just make sure desktop.ini already exists
-        with open(self.desktopini, 'r') as f:
-            self.read(f)
+        with open(self.desktopini, 'a') as f:  # make sure desktop.ini exists
+            pass
+        self.read(self.desktopini)
 
     def activate(self):
         win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
@@ -44,16 +43,18 @@ def select_icon(iconpath=None, iconnum=0):
     return iconpath.value, iconnum.value
 
 if __name__ == "__main__":
-    with contextlib.closing(DesktopIni()) as desktopini:
-        #desktopini = DesktopIni()
-        #desktopini.add_section(".ShellClassInfo")
-        try:
-            iconpath, iconnum = desktopini.get(".ShellClassInfo", "IconResource").split(",")
-        except (NoSectionError, NoOptionError):
-            iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
-        print desktopini.sections()
-        desktopini.write(sys.stdout)
-        iconpath, iconnum =  select_icon(iconpath, iconnum)
-        print "{},-{}".format(iconpath,iconnum)
-        desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
-        desktopini.write(sys.stdout)
+    desktopini = DesktopIni()
+    desktopini.write(sys.stdout)
+    #desktopini.add_section(".ShellClassInfo")
+    try:
+        iconpath, iconnum = desktopini.get(".ShellClassInfo", "IconResource").split(",")
+        iconpath = create_unicode_buffer(iconpath, 260)
+        iconnum = wintypes.INT(-int(iconnum))
+    except (NoSectionError, NoOptionError):
+        iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
+    print "{},-{}".format(iconpath.value,iconnum.value)
+    iconpath, iconnum =  select_icon(iconpath, iconnum)
+    print "{},-{}".format(iconpath.value,iconnum.value)
+    desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
+    desktopini.write(sys.stdout)
+    desktopini.close()
