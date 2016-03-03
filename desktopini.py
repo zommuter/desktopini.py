@@ -28,13 +28,19 @@ class DesktopIni(RawConfigParser):
             self.write(f)
 
 
+class NoIconPickedError(Exception):
+    pass
+
 def select_icon(iconpath=None, iconnum=0):
     if iconpath is None:
         iconpath = create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
     if iconnum == 0:
         iconnum = wintypes.INT(0)
-    assert windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum)) == 1
-    return iconpath.value, iconnum.value
+    if windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum)) == 1:
+        return iconpath.value, iconnum.value
+    else:
+        raise NoIconPickedError
+
 
 if __name__ == "__main__":
     desktopini = DesktopIni()
