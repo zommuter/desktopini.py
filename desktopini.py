@@ -33,11 +33,12 @@ class NoIconPickedError(Exception):
 
 def select_icon(iconpath=None, iconnum=0):
     if iconpath is None:
-        iconpath = create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
-    if iconnum == 0:
-        iconnum = wintypes.INT(0)
-    if windll.shell32.PickIconDlg(None, byref(iconpath), len(iconpath), byref(iconnum)) == 1:
-        return iconpath.value, iconnum.value
+        piconpath = create_unicode_buffer(260)  # 260: https://stackoverflow.com/a/1880453/321973
+    else:
+        piconpath = create_unicode_buffer(iconpath, 260)
+    piconnum = wintypes.INT(iconnum)
+    if windll.shell32.PickIconDlg(None, byref(piconpath), len(piconpath), byref(piconnum)) == 1:
+        return piconpath.value, piconnum.value
     else:
         raise NoIconPickedError
 
@@ -49,11 +50,10 @@ if __name__ == "__main__":
         desktopini.add_section(".ShellClassInfo")
     try:
         iconpath, iconnum = desktopini.get(".ShellClassInfo", "IconResource").split(",")
-        iconpath = create_unicode_buffer(iconpath, 260)
-        iconnum = wintypes.INT(-int(iconnum))
+        iconnum = -int(iconnum)
     except (NoSectionError, NoOptionError):
-        iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
-    print "{},-{}".format(iconpath.value,iconnum.value)
+        iconpath, iconnum = "", 0
+    print "{},-{}".format(iconpath,iconnum)
     iconpath, iconnum =  select_icon(iconpath, iconnum)
     print "{},-{}".format(iconpath,iconnum)
     desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
