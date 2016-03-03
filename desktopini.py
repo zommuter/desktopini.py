@@ -4,15 +4,9 @@
 import win32con, win32api, os, sys
 from ctypes import byref, wintypes, create_unicode_buffer, windll
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
-import contextlib
 
 
 class DesktopIni(RawConfigParser):
-    #def __new__(cls, dirname=None, *args, **kwargs):
-    #    self = super(DesktopIni, cls).__new__(cls, *args, **kwargs)
-    #    self.__init__(dirname)
-    #    return contextlib.closing(self)
-
     def __init__(self, dirname=None):
         #super(DesktopIni, self).__init__()  # ugh: https://stackoverflow.com/a/11527947/321973
         RawConfigParser.__init__(self)
