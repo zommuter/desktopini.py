@@ -54,8 +54,17 @@ if __name__ == "__main__":
     except (NoSectionError, NoOptionError):
         iconpath, iconnum = "", 0
     print "{},-{}".format(iconpath,iconnum)
-    iconpath, iconnum =  select_icon(iconpath, iconnum)
-    print "{},-{}".format(iconpath,iconnum)
-    desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
+
+    result = win32api.MessageBox(None, "Click no to keep current setting, abort to remove.", "Modify icon?", win32con.MB_YESNOCANCEL)
+    print result
+    if result == win32con.IDYES:
+        iconpath, iconnum =  select_icon(iconpath, iconnum)
+        desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
+        print "{},-{}".format(iconpath,iconnum)
+    elif result == win32con.IDCANCEL:
+        desktopini.remove_option(".ShellClassInfo", "IconResource")
+    else:
+        assert result == win32con.IDNO
+
     desktopini.write(sys.stdout)
     desktopini.close()
