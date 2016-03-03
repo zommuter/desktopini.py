@@ -45,7 +45,8 @@ def select_icon(iconpath=None, iconnum=0):
 if __name__ == "__main__":
     desktopini = DesktopIni()
     desktopini.write(sys.stdout)
-    #desktopini.add_section(".ShellClassInfo")
+    if not desktopini.has_section(".ShellClassInfo"):
+        desktopini.add_section(".ShellClassInfo")
     try:
         iconpath, iconnum = desktopini.get(".ShellClassInfo", "IconResource").split(",")
         iconpath = create_unicode_buffer(iconpath, 260)
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
     print "{},-{}".format(iconpath.value,iconnum.value)
     iconpath, iconnum =  select_icon(iconpath, iconnum)
-    print "{},-{}".format(iconpath.value,iconnum.value)
+    print "{},-{}".format(iconpath,iconnum)
     desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
     desktopini.write(sys.stdout)
     desktopini.close()
