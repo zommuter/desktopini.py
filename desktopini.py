@@ -16,6 +16,7 @@ class DesktopIni(RawConfigParser):
     def __init__(self, dirname=None):
         #super(DesktopIni, self).__init__()  # ugh: https://stackoverflow.com/a/11527947/321973
         RawConfigParser.__init__(self)
+        self.optionxform = str
         if dirname is None:
             dirname = os.getcwd()
         self.dirname = dirname
