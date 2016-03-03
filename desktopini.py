@@ -4,29 +4,35 @@
 import win32con, win32api, os, sys
 from ctypes import byref, wintypes, create_unicode_buffer, windll
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
+import contextlib
 
-def get_desktop_ini(dirname):
-    desktopini = os.path.join(dirname, "desktop.ini")
-    with open(desktopini, 'a'):
-        pass # just make sure desktop.ini already exists
-    return desktopini
 
-def activate_desktop_ini(dirname):
-    desktopini = get_desktop_ini(dirname)
-    win32api.SetFileAttributes(desktopini, win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
-    win32api.SetFileAttributes(dirname, win32con.FILE_ATTRIBUTE_READONLY)
+class DesktopIni(RawConfigParser):
+    #def __new__(cls, dirname=None, *args, **kwargs):
+    #    self = super(DesktopIni, cls).__new__(cls, *args, **kwargs)
+    #    self.__init__(dirname)
+    #    return contextlib.closing(self)
 
-def read_desktop_ini(dirname):
-    desktopini = get_desktop_ini(dirname)
-    config = RawConfigParser()
-    with open(desktopini, 'r') as f:
-        config.read(f)
-    return config
+    def __init__(self, dirname=None):
+        #super(DesktopIni, self).__init__()  # ugh: https://stackoverflow.com/a/11527947/321973
+        RawConfigParser.__init__(self)
+        if dirname is None:
+            dirname = os.getcwd()
+        self.dirname = dirname
+        self.desktopini = os.path.join(dirname, "desktop.ini")
+        #with open(self.desktopini, 'a'):
+        #    pass # just make sure desktop.ini already exists
+        with open(self.desktopini, 'r') as f:
+            self.read(f)
 
-def write_desktop_ini(dirname, config):
-    desktopini = get_desktop_ini(dirname)
-    with open(desktopini, 'w') as f:
-        config.write(f)
+    def activate(self):
+        win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
+        win32api.SetFileAttributes(self.dirname, win32con.FILE_ATTRIBUTE_READONLY)
+
+    def close(self):
+        with open(self.desktopini, 'w') as f:
+            self.write(f)
+
 
 def select_icon(iconpath=None, iconnum=0):
     if iconpath is None:
@@ -37,17 +43,16 @@ def select_icon(iconpath=None, iconnum=0):
     return iconpath.value, iconnum.value
 
 if __name__ == "__main__":
-    dirname = os.getcwd()
-    config = read_desktop_ini(dirname)
-    #config.add_section(".ShellClassInfo")
-    try:
-        iconpath, iconnum = config.get(".ShellClassInfo", "IconResource").split(",")
-    except (NoSectionError, NoOptionError):
-        iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
-    print config.sections()
-    config.write(sys.stdout)
-    iconpath, iconnum =  select_icon(iconpath, iconnum)
-    print "{},-{}".format(iconpath,iconnum)
-    config.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
-    config.write(sys.stdout)
-    write_desktop_ini(dirname, config)
+    with contextlib.closing(DesktopIni()) as desktopini:
+        #desktopini = DesktopIni()
+        #desktopini.add_section(".ShellClassInfo")
+        try:
+            iconpath, iconnum = desktopini.get(".ShellClassInfo", "IconResource").split(",")
+        except (NoSectionError, NoOptionError):
+            iconpath, iconnum = create_unicode_buffer(260), wintypes.INT(0)
+        print desktopini.sections()
+        desktopini.write(sys.stdout)
+        iconpath, iconnum =  select_icon(iconpath, iconnum)
+        print "{},-{}".format(iconpath,iconnum)
+        desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
+        desktopini.write(sys.stdout)
