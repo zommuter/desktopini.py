@@ -20,7 +20,7 @@ def read_desktop_ini(dirname):
     desktopini = get_desktop_ini(dirname)
     config = RawConfigParser()
     with open(desktopini, 'r') as f:
-        RawConfigParser().read(f)
+        config.read(f)
     return config
 
 def write_desktop_ini(dirname, config):
