@@ -22,6 +22,12 @@ class DesktopIni(RawConfigParser):
     def activate(self):
         win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
         win32api.SetFileAttributes(self.dirname, win32con.FILE_ATTRIBUTE_READONLY)
+        windll.shell32.SHChangeNotify
+
+    def deactivate(self):
+        win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_NORMAL)
+        dirattr = win32api.GetFileAttributes(self.dirname) ^ win32con.FILE_ATTRIBUTE_READONLY
+        win32api.SetFileAttributes(self.dirname, dirattr)
 
     def cleanup(self):
         for section in self.sections():
@@ -30,11 +36,12 @@ class DesktopIni(RawConfigParser):
 
     def close(self):
         self.cleanup()
+        self.deactivate()
         if len(self.sections()) > 0:
             with open(self.desktopini, 'w') as f:
                 self.write(f)
+            self.activate()
         else:
-            win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_NORMAL)
             os.remove(self.desktopini)
 
 
@@ -63,14 +70,17 @@ if __name__ == "__main__":
         iconnum = -int(iconnum)
     except (NoSectionError, NoOptionError):
         iconpath, iconnum = "", 0
-    print "{},-{}".format(iconpath,iconnum)
+    print "{},{}".format(iconpath,iconnum)
 
     result = win32api.MessageBox(None, "Click no to remove setting, abort to keep previous setting.", "Customize icon?", win32con.MB_YESNOCANCEL)
     print result
     if result == win32con.IDYES:
-        iconpath, iconnum =  select_icon(iconpath, iconnum)
-        desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
-        print "{},-{}".format(iconpath,iconnum)
+        try:
+            iconpath, iconnum =  select_icon(iconpath, iconnum)
+        except NoIconPickedError:
+            exit(19)
+        desktopini.set(".ShellClassInfo", "IconResource", "{},{}".format(iconpath,iconnum))
+        print "{},{}".format(iconpath,iconnum)
     elif result == win32con.IDNO:
         desktopini.remove_option(".ShellClassInfo", "IconResource")
     else:
