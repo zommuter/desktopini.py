@@ -23,9 +23,19 @@ class DesktopIni(RawConfigParser):
         win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_HIDDEN | win32con.FILE_ATTRIBUTE_SYSTEM)
         win32api.SetFileAttributes(self.dirname, win32con.FILE_ATTRIBUTE_READONLY)
 
+    def cleanup(self):
+        for section in self.sections():
+            if len(self.options(section)) == 0:
+                self.remove_section(section)
+
     def close(self):
-        with open(self.desktopini, 'w') as f:
-            self.write(f)
+        self.cleanup()
+        if len(self.sections()) > 0:
+            with open(self.desktopini, 'w') as f:
+                self.write(f)
+        else:
+            win32api.SetFileAttributes(self.desktopini, win32con.FILE_ATTRIBUTE_NORMAL)
+            os.remove(self.desktopini)
 
 
 class NoIconPickedError(Exception):
@@ -55,16 +65,16 @@ if __name__ == "__main__":
         iconpath, iconnum = "", 0
     print "{},-{}".format(iconpath,iconnum)
 
-    result = win32api.MessageBox(None, "Click no to keep current setting, abort to remove.", "Modify icon?", win32con.MB_YESNOCANCEL)
+    result = win32api.MessageBox(None, "Click no to remove setting, abort to keep previous setting.", "Customize icon?", win32con.MB_YESNOCANCEL)
     print result
     if result == win32con.IDYES:
         iconpath, iconnum =  select_icon(iconpath, iconnum)
         desktopini.set(".ShellClassInfo", "IconResource", "{},-{}".format(iconpath,iconnum))
         print "{},-{}".format(iconpath,iconnum)
-    elif result == win32con.IDCANCEL:
+    elif result == win32con.IDNO:
         desktopini.remove_option(".ShellClassInfo", "IconResource")
     else:
-        assert result == win32con.IDNO
+        assert result == win32con.IDCANCEL
 
     desktopini.write(sys.stdout)
     desktopini.close()
