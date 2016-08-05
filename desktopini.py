@@ -8,7 +8,7 @@ from configparser import RawConfigParser, NoSectionError, NoOptionError
 
 class DesktopIni(RawConfigParser, object):
     def __init__(self, dirname=None):
-        super(DesktopIni, self).__init__()
+        super().__init__()
         self.optionxform = str
         if dirname is None:
             dirname = os.getcwd()
