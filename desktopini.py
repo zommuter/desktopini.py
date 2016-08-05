@@ -3,7 +3,7 @@
 
 import win32con, win32api, os, sys
 from ctypes import byref, wintypes, create_unicode_buffer, windll
-from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
+from configparser import RawConfigParser, NoSectionError, NoOptionError
 
 
 class DesktopIni(RawConfigParser):
@@ -70,17 +70,17 @@ if __name__ == "__main__":
         iconnum = -int(iconnum)
     except (NoSectionError, NoOptionError):
         iconpath, iconnum = "", 0
-    print "{},{}".format(iconpath,iconnum)
+    print("{},{}".format(iconpath,iconnum))
 
     result = win32api.MessageBox(None, "Click no to remove setting, abort to keep previous setting.", "Customize icon?", win32con.MB_YESNOCANCEL)
-    print result
+    print(result)
     if result == win32con.IDYES:
         try:
             iconpath, iconnum =  select_icon(iconpath, iconnum)
         except NoIconPickedError:
             exit(19)
         desktopini.set(".ShellClassInfo", "IconResource", "{},{}".format(iconpath,iconnum))
-        print "{},{}".format(iconpath,iconnum)
+        print("{},{}".format(iconpath,iconnum))
     elif result == win32con.IDNO:
         desktopini.remove_option(".ShellClassInfo", "IconResource")
     else:
