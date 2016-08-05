@@ -6,10 +6,9 @@ from ctypes import byref, wintypes, create_unicode_buffer, windll
 from configparser import RawConfigParser, NoSectionError, NoOptionError
 
 
-class DesktopIni(RawConfigParser):
+class DesktopIni(RawConfigParser, object):
     def __init__(self, dirname=None):
-        #super(DesktopIni, self).__init__()  # ugh: https://stackoverflow.com/a/11527947/321973
-        RawConfigParser.__init__(self)
+        super(DesktopIni, self).__init__()
         self.optionxform = str
         if dirname is None:
             dirname = os.getcwd()
